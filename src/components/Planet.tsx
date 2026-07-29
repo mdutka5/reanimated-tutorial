@@ -9,6 +9,7 @@ import Animated, {
   useFrameCallback,
   FrameInfo,
 } from "react-native-reanimated";
+import type { CSSAnimationKeyframes } from "react-native-reanimated";
 
 type PlanetProps = {
   radius: number;
@@ -25,47 +26,57 @@ export default function Planet({
   colors,
   size,
 }: PlanetProps) {
-  const angle = useSharedValue(0);
-  const rotationAngle = useSharedValue(0);
-  const angularVelocitySV = useSharedValue(angularVelocity);
-  const rotationVelocitySV = useSharedValue(rotationalVelocity);
+  const orbitDurationMs = ((2 * Math.PI) / Math.abs(angularVelocity)) * 1000;
+  const spinDurationMs = (360 / Math.abs(rotationalVelocity)) * 1000;
 
-  useEffect(() => {
-    angularVelocitySV.value = angularVelocity;
-  }, [angularVelocity]);
+  const orbitSun: CSSAnimationKeyframes = {
+    "0%": {
+      transform: [{ rotate: "0deg" }, { translateX: radius }],
+    },
+    "100%": {
+      transform: [{ rotate: "360deg" }, { translateX: radius }],
+    },
+  };
 
-  useEffect(() => {
-    rotationVelocitySV.value = rotationalVelocity;
-  }, [rotationalVelocity]);
-
-  useFrameCallback((frameInfo: FrameInfo) => {
-    const dt = (frameInfo.timeSincePreviousFrame ?? 16) / 1000;
-
-    angle.value += angularVelocitySV.value * dt;
-    if (angle.value >= 2 * Math.PI) angle.value -= 2 * Math.PI;
-
-    rotationAngle.value += rotationVelocitySV.value * dt; // deg/s
-    if (rotationAngle.value >= 360) rotationAngle.value -= 360;
-  });
-
-  const animatedMotion = useAnimatedStyle(() => ({
-    transform: [
-      { rotate: `${angle.value}rad` },
-      { translateX: radius },
-      { rotate: `${-angle.value}rad` },
-      { rotate: `${rotationAngle.value}deg` },
-    ],
-  }));
+  const spin: CSSAnimationKeyframes = {
+    "0%": { transform: [{ rotate: "0deg" }] },
+    "100%": { transform: [{ rotate: "360deg" }] },
+  };
 
   return (
     <Animated.View
-      style={[styles.planet, animatedMotion, { width: size, height: size }]}
+      style={[
+        styles.planet,
+        { width: size, height: size },
+        {
+          animationName: orbitSun,
+          animationDuration: orbitDurationMs,
+          animationIterationCount: "infinite",
+          animationTimingFunction: "linear",
+          animationDirection: "normal",
+        },
+      ]}
     >
-      <View style={[styles.left, { backgroundColor: colors.left }]} />
-      <View style={[styles.right, { backgroundColor: colors.right }]} />
+      <Animated.View
+        style={[
+          styles.planet,
+          { width: size, height: size },
+          rotationalVelocity !== 0 && {
+            animationName: spin,
+            animationDuration: spinDurationMs,
+            animationIterationCount: "infinite",
+            animationTimingFunction: "linear",
+            animationDirection: rotationalVelocity < 0 ? "reverse" : "normal",
+          },
+        ]}
+      >
+        <View style={[styles.left, { backgroundColor: colors.left }]} />
+        <View style={[styles.right, { backgroundColor: colors.right }]} />
+      </Animated.View>
     </Animated.View>
   );
 }
+
 const styles = StyleSheet.create({
   planet: {
     borderRadius: 50,
