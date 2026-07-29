@@ -50,8 +50,9 @@ export default function Planet({
 
   const animatedMotion = useAnimatedStyle(() => ({
     transform: [
-      { translateX: radius * Math.cos(angle.value) },
-      { translateY: radius * Math.sin(angle.value) },
+      { rotate: `${angle.value}rad` },
+      { translateX: radius },
+      { rotate: `${-angle.value}rad` },
       { rotate: `${rotationAngle.value}deg` },
     ],
   }));
