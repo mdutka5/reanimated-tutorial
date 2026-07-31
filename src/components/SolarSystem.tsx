@@ -1,10 +1,14 @@
-import { View } from "react-native";
-import Planet from "../../src/components/Planet";
+import { View, Text, StyleSheet } from "react-native";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+} from "react-native-reanimated";
+import Planet from "./Planet";
 
-export default function HomeScreen() {
+export default function SolarSystem() {
   return (
-    <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-      {/* Sun */}
+    <View>
       <Planet
         radius={0}
         rotationalVelocity={5}
