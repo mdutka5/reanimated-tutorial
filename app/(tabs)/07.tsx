@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -28,44 +28,36 @@ import Card, {
 import HorizontalScrollTabs from "../../src/components/HorizontalScrollTabs";
 import LightLayer from "../../src/components/LightLayer";
 
-const DATA: CardData[] = [
-  { id: "1", name: "1", color: "#ef4444" },
-  { id: "2", name: "2", color: "#3b82f6" },
-  { id: "3", name: "3", color: "#22c55e" },
-  { id: "4", name: "4", color: "#f97316" },
-  { id: "5", name: "5", color: "#a855f7" },
-  { id: "6", name: "6", color: "#14b8a6" },
-  { id: "7", name: "7", color: "#ec4899" },
-  { id: "8", name: "8", color: "#92400e" },
-  { id: "9", name: "9", color: "#6b7280" },
-  { id: "10", name: "10", color: "#1e3a8a" },
+const INITIAL_DATA: CardData[] = [
+  { id: "1", name: "1", color: "#ef4444", bgColor: "#531313" },
+  { id: "2", name: "2", color: "#3b82f6", bgColor: "#14265a" },
+  { id: "3", name: "3", color: "#22c55e", bgColor: "#0d361d" },
+  { id: "4", name: "4", color: "#f97316", bgColor: "#511d0c" },
+  { id: "5", name: "5", color: "#a855f7", bgColor: "#391258" },
+  { id: "6", name: "6", color: "#14b8a6", bgColor: "#0b3d3a" },
+  { id: "7", name: "7", color: "#ec4899", bgColor: "#660f32" },
+  { id: "8", name: "8", color: "#92400e", bgColor: "#2d1102" },
+  { id: "9", name: "9", color: "#6b7280", bgColor: "#242a35" },
+  { id: "10", name: "10", color: "#1e3a8a", bgColor: "#0f1837" },
 ];
 
 const LIGHT_HEIGHT = 320;
-
-const SCROLL_INPUT = DATA.map((_, i) => i * ITEM_WIDTH);
-const CARD_COLORS = DATA.map((item) => item.color);
-const BG_COLORS = [
-  "#531313", // darker red
-  "#14265a", // darker blue
-  "#0d361d", // darker green
-  "#511d0c", // darker orange/brown
-  "#391258", // darker purple
-  "#0b3d3a", // darker teal
-  "#660f32", // darker pink
-  "#2d1102", // darker brown
-  "#242a35", // darker gray
-  "#0f1837", // darker navy
-];
 
 export default function Screen07() {
   const { width } = useWindowDimensions();
   const listRef = useAnimatedRef<Animated.FlatList<CardData>>();
   const scrollX = useSharedValue(0);
   const startX = useSharedValue(0);
+  const [data, setData] = useState(INITIAL_DATA);
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  const maxOffset = (DATA.length - 1) * ITEM_WIDTH;
+  const scrollInput = useMemo(
+    () => data.map((_, i) => i * ITEM_WIDTH),
+    [data],
+  );
+  const bgColors = useMemo(() => data.map((item) => item.bgColor), [data]);
+
+  const maxOffset = Math.max(data.length - 1, 0) * ITEM_WIDTH;
   const sidePad = (width - CARD_WIDTH) / 2;
 
   useAnimatedReaction(
@@ -75,11 +67,39 @@ export default function Screen07() {
     },
   );
 
-  const backgroundStyle = useAnimatedStyle(() => ({
-    backgroundColor: interpolateColor(scrollX.value, SCROLL_INPUT, BG_COLORS),
-  }));
+  const backgroundStyle = useAnimatedStyle(() => {
+    if (bgColors.length === 0) {
+      return { backgroundColor: "#0f172a" };
+    }
+    if (bgColors.length === 1) {
+      return { backgroundColor: bgColors[0] };
+    }
+    return {
+      backgroundColor: interpolateColor(scrollX.value, scrollInput, bgColors),
+    };
+  });
+
+  const handleDismiss = useCallback(
+    (id: string) => {
+      setData((prev) => {
+        const index = prev.findIndex((card) => card.id === id);
+        if (index === -1) return prev;
+
+        const next = prev.filter((card) => card.id !== id);
+        const newIndex = Math.min(index, Math.max(next.length - 1, 0));
+
+        setCurrentIndex(newIndex);
+        scrollX.value = newIndex * ITEM_WIDTH;
+
+        return next;
+      });
+    },
+    [scrollX],
+  );
 
   const pan = Gesture.Pan()
+    .activeOffsetX([-12, 12])
+    .failOffsetY([-24, 24])
     .onBegin(() => {
       startX.value = scrollX.value;
     })
@@ -101,7 +121,7 @@ export default function Screen07() {
           e.translationX + e.velocityX > 0 ? startIndex - 1 : startIndex + 1;
       }
 
-      targetIndex = Math.min(Math.max(targetIndex, 0), DATA.length - 1);
+      targetIndex = Math.min(Math.max(targetIndex, 0), data.length - 1);
 
       scrollX.value = withTiming(
         targetIndex * ITEM_WIDTH,
@@ -115,21 +135,25 @@ export default function Screen07() {
     });
 
   const renderItem: ListRenderItem<CardData> = useCallback(
-    ({ item }) => (
+    ({ item, index }) => (
       <View style={styles.item}>
-        <Card item={item} />
+        <Card
+          item={item}
+          dismissible={index === currentIndex}
+          onDismiss={handleDismiss}
+        />
       </View>
     ),
-    [],
+    [currentIndex, handleDismiss],
   );
 
   return (
     <Animated.View style={[styles.container, backgroundStyle]}>
       <View style={styles.bottomLight} pointerEvents="none">
-        {CARD_COLORS.map((color, index) => (
+        {data.map((item, index) => (
           <LightLayer
-            key={DATA[index].id}
-            color={color}
+            key={item.id}
+            color={item.color}
             index={index}
             scrollX={scrollX}
             width={width}
@@ -140,10 +164,10 @@ export default function Screen07() {
         ))}
       </View>
       <View style={styles.topLight} pointerEvents="none">
-        {CARD_COLORS.map((color, index) => (
+        {data.map((item, index) => (
           <LightLayer
-            key={DATA[index].id}
-            color={color}
+            key={item.id}
+            color={item.color}
             index={index}
             scrollX={scrollX}
             width={width}
@@ -153,32 +177,39 @@ export default function Screen07() {
           />
         ))}
       </View>
-      <Text style={styles.title}>Swipe cards · {currentIndex + 1}</Text>
-      <View style={styles.listArea}>
-        <GestureDetector gesture={pan}>
-          <Animated.View>
-            <Animated.FlatList
-              ref={listRef}
-              horizontal
-              scrollEnabled={false}
-              data={DATA}
-              keyExtractor={(item) => item.id}
-              renderItem={renderItem}
-              getItemLayout={(_, index) => ({
-                length: ITEM_WIDTH,
-                offset: ITEM_WIDTH * index,
-                index,
-              })}
-              contentContainerStyle={{ paddingHorizontal: sidePad }}
-              showsHorizontalScrollIndicator={false}
-            />
-          </Animated.View>
-        </GestureDetector>
-        <HorizontalScrollTabs
-          tabsCount={DATA.length}
-          currentIndex={currentIndex}
-        />
-      </View>
+      <Text style={styles.title}>
+        {data.length === 0
+          ? "All cards dismissed"
+          : `Swipe cards · ${currentIndex + 1}`}
+      </Text>
+      {data.length > 0 && (
+        <View style={styles.listArea}>
+          <GestureDetector gesture={pan}>
+            <Animated.View>
+              <Animated.FlatList
+                ref={listRef}
+                horizontal
+                scrollEnabled={false}
+                data={data}
+                keyExtractor={(item) => item.id}
+                renderItem={renderItem}
+                extraData={currentIndex}
+                getItemLayout={(_, index) => ({
+                  length: ITEM_WIDTH,
+                  offset: ITEM_WIDTH * index,
+                  index,
+                })}
+                contentContainerStyle={{ paddingHorizontal: sidePad }}
+                showsHorizontalScrollIndicator={false}
+              />
+            </Animated.View>
+          </GestureDetector>
+          <HorizontalScrollTabs
+            tabsCount={data.length}
+            currentIndex={currentIndex}
+          />
+        </View>
+      )}
     </Animated.View>
   );
 }
