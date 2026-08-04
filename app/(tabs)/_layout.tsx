@@ -21,6 +21,9 @@ export default function TabLayout() {
       <NativeTabs.Trigger name="06">
         <NativeTabs.Trigger.Label>06</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="07">
+        <NativeTabs.Trigger.Label>07</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
     </NativeTabs>
   );
 }

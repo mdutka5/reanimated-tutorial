@@ -19,10 +19,6 @@ const MIN_BOUNCE_VELOCITY = 50;
 const RESTITUTION = 0.7;
 const BOUND_EPSILON = 0.5;
 
-/**
- * Samples how fast `sv` actually moves, so a bounce can be based on the speed at
- * the moment of impact instead of the velocity the animation started with.
- */
 function useImpactVelocity(sv: SharedValue<number>, clamp: [number, number]) {
   const velocity = useSharedValue(0);
   const previous = useSharedValue(0);
@@ -32,8 +28,6 @@ function useImpactVelocity(sv: SharedValue<number>, clamp: [number, number]) {
     const isFree =
       value > clamp[0] + BOUND_EPSILON && value < clamp[1] - BOUND_EPSILON;
 
-    // A frame that ends on a wall is cut short by the clamp and would report a
-    // speed far below the real impact, so only free-flight frames are sampled.
     if (timeSincePreviousFrame && isFree) {
       velocity.value =
         ((value - previous.value) / timeSincePreviousFrame) * 1000;
