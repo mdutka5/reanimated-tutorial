@@ -11,6 +11,7 @@ export default function HorizontalScrollTabs({
     <View style={styles.container}>
       {Array.from({ length: tabsCount }, (_, i: number) => (
         <View
+          key={i}
           style={[styles.tab, currentIndex === i ? styles.currentTab : {}]}
         />
       ))}
