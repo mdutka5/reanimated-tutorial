@@ -1,4 +1,7 @@
+import { Platform } from "react-native";
 import { NativeTabs } from "expo-router/unstable-native-tabs";
+
+const hideOnAndroid = Platform.OS === "android";
 
 export default function TabLayout() {
   return (
@@ -15,13 +18,13 @@ export default function TabLayout() {
       <NativeTabs.Trigger name="04">
         <NativeTabs.Trigger.Label>04</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="05">
+      <NativeTabs.Trigger name="05" hidden={hideOnAndroid}>
         <NativeTabs.Trigger.Label>05</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="06">
+      <NativeTabs.Trigger name="06" hidden={hideOnAndroid}>
         <NativeTabs.Trigger.Label>06</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="07">
+      <NativeTabs.Trigger name="07" hidden={hideOnAndroid}>
         <NativeTabs.Trigger.Label>07</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="contacts">
