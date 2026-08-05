@@ -24,6 +24,9 @@ export default function TabLayout() {
       <NativeTabs.Trigger name="07">
         <NativeTabs.Trigger.Label>07</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="contacts">
+        <NativeTabs.Trigger.Label>Contacts</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
     </NativeTabs>
   );
 }
