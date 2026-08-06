@@ -66,7 +66,7 @@ export default function SkiaScreen() {
 
   const transform = useDerivedValue(() => [{ rotate: rotation.value }]);
   const snakeStart = useDerivedValue(() => Math.max(0, progress.value - 0.12));
-  const sketchOpacity = useDerivedValue(() => 0.25 * (1 - progress.value));
+  const sketchOpacity = useDerivedValue(() => 0.7 * (1 - progress.value));
 
   const head = useDerivedValue(() => {
     const pts = points.value;
@@ -121,7 +121,7 @@ export default function SkiaScreen() {
             strokeWidth={3}
             strokeCap="round"
             strokeJoin="round"
-            color="rgba(0,0,0,0.25)"
+            color="rgba(0,0,0,0.85)"
             opacity={sketchOpacity}
           />
 
