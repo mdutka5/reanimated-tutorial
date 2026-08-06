@@ -33,6 +33,9 @@ export default function TabLayout() {
       <NativeTabs.Trigger name="skia">
         <NativeTabs.Trigger.Label>Skia</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="sensors">
+        <NativeTabs.Trigger.Label>sensors</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
     </NativeTabs>
   );
 }
