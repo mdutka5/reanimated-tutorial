@@ -5,6 +5,7 @@ import {
   Pressable,
   useWindowDimensions,
 } from "react-native";
+import { Image } from "expo-image";
 import { useChessGame } from "../../chess/useChessGame";
 import ChessBoard from "./ChessBoard";
 
@@ -21,6 +22,9 @@ export default function ChessGame() {
     onDragStart,
     onDrop,
     canDragPiece,
+    isLegalMove,
+    pendingAiMove,
+    commitAiMove,
   } = useChessGame();
 
   return (
@@ -36,6 +40,21 @@ export default function ChessGame() {
         onDragStart={onDragStart}
         onDrop={onDrop}
         canDragPiece={canDragPiece}
+        isLegalMove={isLegalMove}
+        pendingAiMove={pendingAiMove}
+        onAiMoveCommit={commitAiMove}
+      />
+
+      <Image
+        source={require("../../../assets/palm-tree.svg")}
+        style={{
+          width: 50,
+          height: 50,
+          position: "absolute",
+          top: 180,
+          left: 50,
+        }}
+        contentFit="contain"
       />
 
       <Pressable style={styles.resetButton} onPress={resetGame}>

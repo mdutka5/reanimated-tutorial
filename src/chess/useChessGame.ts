@@ -13,6 +13,12 @@ export function useChessGame() {
   const [board, setBoard] = useState<BoardConfig>(() => game.exportJson());
   const [selected, setSelected] = useState<string | null>(null);
   const [legalMoves, setLegalMoves] = useState<string[]>([]);
+  // Set once the AI has picked its move, before it's applied to the game, so
+  // the UI can glide the piece the same way a player's move does.
+  const [pendingAiMove, setPendingAiMove] = useState<{
+    from: string;
+    to: string;
+  } | null>(null);
   const aiTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -38,6 +44,7 @@ export function useChessGame() {
     const next = new Game();
     gameRef.current = next;
     clearSelection();
+    setPendingAiMove(null);
     setBoard(next.exportJson());
   }
 
@@ -50,11 +57,26 @@ export function useChessGame() {
     if (state.isFinished || state.turn !== "black") return;
 
     try {
-      current.aiMove(AI_LEVEL);
-      setBoard(current.exportJson());
+      // Pick the move but don't apply it yet, so the UI can glide the piece
+      // there first, just like it does for the player's own moves.
+      const { from, to } = current.board.calculateAiMove(AI_LEVEL);
+      setPendingAiMove({ from, to });
     } catch {
       // No legal AI move (draw / finished)
     }
+  }
+
+  function commitAiMove(from: string, to: string) {
+    const current = gameRef.current;
+    if (!current) return;
+
+    try {
+      current.move(from, to);
+    } catch {
+      // Board changed unexpectedly since the move was picked; drop it.
+    }
+    setPendingAiMove(null);
+    setBoard(current.exportJson());
   }
 
   function selectPiece(square: string) {
@@ -67,9 +89,12 @@ export function useChessGame() {
     setLegalMoves(legalMovesFrom(square));
   }
 
+  function isLegalMove(from: string, to: string) {
+    return isPlayerTurn && legalMovesFrom(from).includes(to);
+  }
+
   function tryMove(from: string, to: string) {
-    if (!isPlayerTurn) return false;
-    if (!legalMovesFrom(from).includes(to)) return false;
+    if (!isLegalMove(from, to)) return false;
 
     try {
       game.move(from, to);
@@ -134,5 +159,8 @@ export function useChessGame() {
     onDragStart,
     onDrop,
     canDragPiece,
+    isLegalMove,
+    pendingAiMove,
+    commitAiMove,
   };
 }

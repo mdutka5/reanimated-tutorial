@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { View, StyleSheet } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { runOnJS } from "react-native-reanimated";
@@ -8,7 +9,7 @@ import {
   squareAt,
   squareFromPoint,
 } from "../../chess/board";
-import DraggablePiece from "./DraggablePiece";
+import DraggablePiece, { type DraggablePieceHandle } from "./DraggablePiece";
 
 const LIGHT = "#E8D5B7";
 const DARK = "#B58863";
@@ -24,6 +25,9 @@ type ChessBoardProps = {
   onDragStart: (square: string) => void;
   onDrop: (from: string, to: string | null) => boolean;
   canDragPiece: (square: string) => boolean;
+  isLegalMove: (from: string, to: string) => boolean;
+  pendingAiMove: { from: string; to: string } | null;
+  onAiMoveCommit: (from: string, to: string) => void;
 };
 
 export default function ChessBoard({
@@ -35,13 +39,43 @@ export default function ChessBoard({
   onDragStart,
   onDrop,
   canDragPiece,
+  isLegalMove,
+  pendingAiMove,
+  onAiMoveCommit,
 }: ChessBoardProps) {
   const squareSize = boardSize / BOARD_SIZE;
+  const pieceRefs = useRef<Record<string, DraggablePieceHandle | null>>({});
 
   const handleTap = (x: number, y: number) => {
     const square = squareFromPoint(x, y, squareSize);
-    if (square) onSquarePress(square);
+    if (!square) return;
+
+    // Tapping a legal destination for the selected piece glides it there
+    // (mirroring the drag-to-move transition) instead of moving instantly.
+    if (selected && isLegalMove(selected, square)) {
+      const pieceRef = pieceRefs.current[selected];
+      if (pieceRef) {
+        pieceRef.snapTo(square, () => onDrop(selected, square));
+        return;
+      }
+    }
+
+    onSquarePress(square);
   };
+
+  // The AI picks its move ahead of time without applying it, so it can glide
+  // over exactly like a player's move before the board state updates.
+  useEffect(() => {
+    if (!pendingAiMove) return;
+
+    const { from, to } = pendingAiMove;
+    const pieceRef = pieceRefs.current[from];
+    if (pieceRef) {
+      pieceRef.snapTo(to, () => onAiMoveCommit(from, to));
+    } else {
+      onAiMoveCommit(from, to);
+    }
+  }, [pendingAiMove, onAiMoveCommit]);
 
   // One tap gesture for the whole board: pieces sit on top of their square, so
   // the tapped point resolves to the right square either way. maxDistance keeps
@@ -83,6 +117,9 @@ export default function ChessBoard({
           return (
             <DraggablePiece
               key={square}
+              ref={(instance) => {
+                pieceRefs.current[square] = instance;
+              }}
               square={square}
               piece={piece}
               left={origin.col * squareSize}
@@ -91,6 +128,7 @@ export default function ChessBoard({
               enabled={canDragPiece(square)}
               onDragStart={onDragStart}
               onDrop={onDrop}
+              isLegalMove={isLegalMove}
             />
           );
         })}

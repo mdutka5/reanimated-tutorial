@@ -32,6 +32,12 @@ declare module "js-chess-engine" {
   };
 
   export class Game {
+    // Internal board engine. `calculateAiMove` picks the AI's move without
+    // applying it, letting callers animate the move before committing it via
+    // `move()`.
+    board: {
+      calculateAiMove(level?: number): { from: string; to: string };
+    };
     constructor(configuration?: BoardConfig | string);
     move(from: string, to: string): Record<string, string>;
     moves(from?: string | null): string[] | Record<string, string[]>;
